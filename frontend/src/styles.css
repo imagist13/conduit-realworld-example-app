@@ -1252,6 +1252,14 @@ footer .attribution {
   flex-shrink: 0;
 }
 
+.edited-date {
+  display: block;
+  color: var(--text-lighter);
+  font-size: 0.7rem;
+  margin-top: 2px;
+  font-style: italic;
+}
+
 .btn .counter {
   font-size: 0.8rem;
 }
