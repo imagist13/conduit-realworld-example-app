@@ -1237,6 +1237,21 @@ footer .attribution {
   padding-bottom: 0;
 }
 
+.read-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+  vertical-align: middle;
+}
+
+.read-count-icon {
+  flex-shrink: 0;
+}
+
 .btn .counter {
   font-size: 0.8rem;
 }
