@@ -5,6 +5,7 @@ const {
   allComments,
   createComment,
   deleteComment,
+  likeUnlikeComment,
 } = require("../../controllers/comments");
 
 //? All Comments for Article

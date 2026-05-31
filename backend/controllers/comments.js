@@ -5,7 +5,7 @@ const {
   ForbiddenError,
 } = require("../helper/customErrors");
 const { appendFollowers } = require("../helper/helpers");
-const { Article, Comment, User } = require("../models");
+const { Article, Comment, User, CommentLike } = require("../models");
 
 //? All Comments for Article
 const allComments = async (req, res, next) => {
@@ -24,6 +24,9 @@ const allComments = async (req, res, next) => {
 
     for (const comment of comments) {
       await appendFollowers(loggedUser, comment);
+      const liked = loggedUser ? await comment.hasUser(loggedUser) : false;
+      comment.dataValues.liked = loggedUser ? liked : false;
+      comment.dataValues.likesCount = comment.likeCount;
     }
 
     res.json({ comments });
@@ -84,4 +87,49 @@ const deleteComment = async (req, res, next) => {
   }
 };
 
-module.exports = { allComments, createComment, deleteComment };
+//* Like/Unlike Comment
+const likeUnlikeComment = async (req, res, next) => {
+  try {
+    const { loggedUser } = req;
+    if (!loggedUser) throw new UnauthorizedError();
+
+    const { slug, commentId } = req.params;
+
+    const article = await Article.findOne({ where: { slug: slug } });
+    if (!article) throw new NotFoundError("Article");
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) throw new NotFoundError("Comment");
+
+    if (req.method === "POST") {
+      try {
+        await comment.addUser(loggedUser);
+        await comment.increment("likeCount", { by: 1 });
+      } catch (error) {
+        if (error.name === "SequelizeUniqueConstraintError") {
+          // Already liked - no-op (idempotent)
+        } else {
+          throw error;
+        }
+      }
+    } else if (req.method === "DELETE") {
+      const removed = await comment.removeUser(loggedUser);
+      if (removed) {
+        await comment.decrement("likeCount", { by: 1 });
+      }
+    }
+
+    const liked = await comment.hasUser(loggedUser);
+    res.json({
+      comment: {
+        ...comment.toJSON(),
+        liked,
+        likesCount: comment.likeCount,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { allComments, createComment, deleteComment, likeUnlikeComment };
