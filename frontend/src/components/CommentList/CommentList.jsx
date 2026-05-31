@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import dateFormatter from "../../helpers/dateFormatter";
 import deleteComment from "../../services/deleteComment";
 import getComments from "../../services/getComments";
+import toggleCommentLike from "../../services/toggleCommentLike";
 import CommentAuthor from "./CommentAuthor";
 
 function CommentList({ triggerUpdate, updateComments }) {
@@ -26,8 +27,34 @@ function CommentList({ triggerUpdate, updateComments }) {
       .catch(console.error);
   };
 
+  const handleLikeClick = async ({ id, liked, likesCount }) => {
+    if (!isAuth) {
+      alert("You need to login first");
+      return;
+    }
+
+    try {
+      const updatedComment = await toggleCommentLike({
+        slug,
+        commentId: id,
+        isLiked: liked,
+        headers,
+      });
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === updatedComment.id
+            ? { ...c, liked: updatedComment.liked, likesCount: updatedComment.likesCount }
+            : c
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return comments?.length > 0 ? (
-    comments.map(({ author, author: { username }, body, createdAt, id }) => {
+    comments.map(({ author, author: { username }, body, createdAt, id, liked, likesCount }) => {
       return (
         <div className="card" key={id}>
           <div className="card-block">
@@ -36,6 +63,13 @@ function CommentList({ triggerUpdate, updateComments }) {
           <div className="card-footer">
             <CommentAuthor {...author} />
             <span className="date-posted">{dateFormatter(createdAt)}</span>
+            <button
+              className={`btn btn-sm ${liked ? "btn-primary" : "btn-outline-primary"}`}
+              onClick={() => handleLikeClick({ id, liked, likesCount })}
+            >
+              <i className="ion-heart"></i>
+              <span style={{ marginLeft: 4 }}>{likesCount || 0}</span>
+            </button>
             {isAuth && loggedUser.username === username && (
               <button
                 className="btn btn-sm btn-outline-secondary pull-xs-right"
