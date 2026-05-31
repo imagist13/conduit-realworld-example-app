@@ -14,5 +14,8 @@ router.get("/:slug/comments", verifyToken, allComments);
 router.post("/:slug/comments", verifyToken, createComment);
 //* Delete Comment for Article
 router.delete("/:slug/comments/:commentId", verifyToken, deleteComment);
+//* Like/Unlike Comment
+router.post("/:slug/comments/:commentId/like", verifyToken, likeUnlikeComment);
+router.delete("/:slug/comments/:commentId/like", verifyToken, likeUnlikeComment);
 
 module.exports = router;

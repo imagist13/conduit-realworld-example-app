@@ -101,18 +101,20 @@ const likeUnlikeComment = async (req, res, next) => {
     const comment = await Comment.findByPk(commentId);
     if (!comment) throw new NotFoundError("Comment");
 
-    if (req.method === "POST") {
+    const isLike = req.method === "POST";
+
+    if (isLike) {
       try {
         await comment.addUser(loggedUser);
         await comment.increment("likeCount", { by: 1 });
       } catch (error) {
         if (error.name === "SequelizeUniqueConstraintError") {
-          // Already liked - no-op (idempotent)
+          // Already liked - idempotent no-op
         } else {
           throw error;
         }
       }
-    } else if (req.method === "DELETE") {
+    } else {
       const removed = await comment.removeUser(loggedUser);
       if (removed) {
         await comment.decrement("likeCount", { by: 1 });
