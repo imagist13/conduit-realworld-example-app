@@ -7,7 +7,6 @@ const {
 const { appendFollowers } = require("../helper/helpers");
 const { Article, Comment, User } = require("../models");
 
-//? All Comments for Article
 const allComments = async (req, res, next) => {
   try {
     const { loggedUser } = req;
@@ -32,7 +31,6 @@ const allComments = async (req, res, next) => {
   }
 };
 
-//* Create Comment for Article
 const createComment = async (req, res, next) => {
   try {
     const { loggedUser } = req;
@@ -61,7 +59,6 @@ const createComment = async (req, res, next) => {
   }
 };
 
-//* Delete Comment for Article
 const deleteComment = async (req, res, next) => {
   try {
     const { loggedUser } = req;
@@ -84,4 +81,31 @@ const deleteComment = async (req, res, next) => {
   }
 };
 
-module.exports = { allComments, createComment, deleteComment };
+const likeComment = async (req, res, next) => {
+  try {
+    const { commentId } = req.params;
+    const { action } = req.body;
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) throw new NotFoundError("Comment");
+
+    if (action === "like") {
+      await comment.increment("likeCount", { by: 1 });
+    } else if (action === "unlike") {
+      if (comment.likeCount > 0) {
+        await comment.decrement("likeCount", { by: 1 });
+      }
+    }
+
+    await comment.reload();
+
+    const author = await User.findByPk(comment.userId);
+    comment.dataValues.author = author;
+
+    res.json({ comment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { allComments, createComment, deleteComment, likeComment };
