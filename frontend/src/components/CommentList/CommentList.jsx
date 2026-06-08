@@ -5,6 +5,7 @@ import dateFormatter from "../../helpers/dateFormatter";
 import deleteComment from "../../services/deleteComment";
 import getComments from "../../services/getComments";
 import CommentAuthor from "./CommentAuthor";
+import LikeButton from "./LikeButton";
 
 function CommentList({ triggerUpdate, updateComments }) {
   const [comments, setComments] = useState([]);
@@ -27,7 +28,7 @@ function CommentList({ triggerUpdate, updateComments }) {
   };
 
   return comments?.length > 0 ? (
-    comments.map(({ author, author: { username }, body, createdAt, id }) => {
+    comments.map(({ author, author: { username }, body, createdAt, id, liked, likesCount }) => {
       return (
         <div className="card" key={id}>
           <div className="card-block">
@@ -36,6 +37,15 @@ function CommentList({ triggerUpdate, updateComments }) {
           <div className="card-footer">
             <CommentAuthor {...author} />
             <span className="date-posted">{dateFormatter(createdAt)}</span>
+            {isAuth && (
+              <LikeButton
+                liked={liked}
+                likesCount={likesCount}
+                commentId={id}
+                slug={slug}
+                handler={updateComments}
+              />
+            )}
             {isAuth && loggedUser.username === username && (
               <button
                 className="btn btn-sm btn-outline-secondary pull-xs-right"
