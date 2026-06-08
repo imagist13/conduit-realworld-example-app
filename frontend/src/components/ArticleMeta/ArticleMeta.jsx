@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import dateFormatter from "../../helpers/dateFormatter";
+import dateFormatter, { timeAgo } from "../../helpers/dateFormatter";
 import Avatar from "../Avatar";
 
-function ArticleMeta({ author, children, createdAt }) {
+function ArticleMeta({ author, children, createdAt, updatedAt }) {
   const { bio, followersCount, following, image, username } = author || {};
+  const showLastEdited = updatedAt && updatedAt !== createdAt;
+  const lastEditedText = showLastEdited ? `Last edited ${timeAgo(updatedAt)}` : null;
 
   return (
     <div className="article-meta">
@@ -22,6 +24,9 @@ function ArticleMeta({ author, children, createdAt }) {
           {username}
         </Link>
         <span className="date">{dateFormatter(createdAt)}</span>
+        {lastEditedText && (
+          <span className="date"> · {lastEditedText}</span>
+        )}
       </div>
       {children}
     </div>
