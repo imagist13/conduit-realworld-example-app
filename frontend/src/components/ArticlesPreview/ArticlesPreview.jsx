@@ -3,6 +3,15 @@ import ArticleMeta from "../ArticleMeta";
 import ArticleTags from "../ArticleTags";
 import FavButton from "../FavButton";
 
+function getMockViewsCount(slug) {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) {
+    hash = (hash << 5) - hash + slug.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash) % 9000 + 100;
+}
+
 function ArticlesPreview({ articles, loading, updateArticles }) {
   const handleFav = (article) => {
     const items = [...articles];
@@ -16,6 +25,7 @@ function ArticlesPreview({ articles, loading, updateArticles }) {
 
   return articles?.length > 0 ? (
     articles.map((article) => {
+      const viewsCount = getMockViewsCount(article.slug);
       return (
         <div className="article-preview" key={article.slug}>
           <ArticleMeta author={article.author} createdAt={article.createdAt}>
@@ -37,6 +47,11 @@ function ArticlesPreview({ articles, loading, updateArticles }) {
             <span>Read more...</span>
             <ArticleTags tagList={article.tagList} />
           </Link>
+          <div className="article-meta">
+            <span className="views-count">
+              <i className="ion-eye"></i> {viewsCount} Views
+            </span>
+          </div>
         </div>
       );
     })
