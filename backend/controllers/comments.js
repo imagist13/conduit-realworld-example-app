@@ -4,7 +4,7 @@ const {
   FieldRequiredError,
   ForbiddenError,
 } = require("../helper/customErrors");
-const { appendFollowers } = require("../helper/helpers");
+const { appendFollowers, appendCommentLikes } = require("../helper/helpers");
 const { Article, Comment, User } = require("../models");
 
 //? All Comments for Article
@@ -24,6 +24,7 @@ const allComments = async (req, res, next) => {
 
     for (const comment of comments) {
       await appendFollowers(loggedUser, comment);
+      await appendCommentLikes(loggedUser, comment);
     }
 
     res.json({ comments });
@@ -54,6 +55,7 @@ const createComment = async (req, res, next) => {
     delete loggedUser.dataValues.token;
     comment.dataValues.author = loggedUser;
     await appendFollowers(loggedUser, loggedUser);
+    await appendCommentLikes(loggedUser, comment);
 
     res.status(201).json({ comment });
   } catch (error) {
@@ -84,4 +86,62 @@ const deleteComment = async (req, res, next) => {
   }
 };
 
-module.exports = { allComments, createComment, deleteComment };
+//* Like Comment (幂等)
+const likeComment = async (req, res, next) => {
+  try {
+    const { loggedUser } = req;
+    if (!loggedUser) throw new UnauthorizedError();
+
+    const { slug, commentId } = req.params;
+
+    const article = await Article.findOne({ where: { slug: slug } });
+    if (!article) throw new NotFoundError("Article");
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) throw new NotFoundError("Comment");
+
+    // 幂等：检查是否已点赞
+    const alreadyLiked = await comment.hasUser(loggedUser);
+    if (!alreadyLiked) {
+      await comment.addUser(loggedUser);
+      const newCount = await comment.countUsers();
+      await comment.update({ likeCount: newCount });
+    }
+
+    await appendCommentLikes(loggedUser, comment);
+    res.json({ comment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//* Unlike Comment (幂等)
+const unlikeComment = async (req, res, next) => {
+  try {
+    const { loggedUser } = req;
+    if (!loggedUser) throw new UnauthorizedError();
+
+    const { slug, commentId } = req.params;
+
+    const article = await Article.findOne({ where: { slug: slug } });
+    if (!article) throw new NotFoundError("Article");
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) throw new NotFoundError("Comment");
+
+    // 幂等：检查是否已取消点赞
+    const isLiked = await comment.hasUser(loggedUser);
+    if (isLiked) {
+      await comment.removeUser(loggedUser);
+      const newCount = await comment.countUsers();
+      await comment.update({ likeCount: newCount });
+    }
+
+    await appendCommentLikes(loggedUser, comment);
+    res.json({ comment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { allComments, createComment, deleteComment, likeComment, unlikeComment };

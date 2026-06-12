@@ -24,6 +24,14 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: false,
       });
 
+      // Comment Likes
+      this.belongsToMany(Comment, {
+        through: "CommentLikes",
+        foreignKey: "userId",
+        timestamps: false,
+        as: "likedComments"
+      });
+
       // Followers
       this.belongsToMany(User, {
         through: "Followers",
