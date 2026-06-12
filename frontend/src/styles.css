@@ -1241,6 +1241,16 @@ footer .attribution {
   font-size: 0.8rem;
 }
 
+.views-count {
+  color: var(--text-light);
+  font-size: 0.8rem;
+  font-weight: 300;
+}
+
+.views-count i {
+  margin-right: 4px;
+}
+
 /* ============================================================================
  * HOME PAGE
  * ============================================================================ */
